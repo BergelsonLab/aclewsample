@@ -9,7 +9,7 @@
 
 #### sample.py
 
-sample from the ACLEW spreadsheet
+sample entries from the ACLEW spreadsheet
 ```
 $ python sample.py aclew_spreadsheet.csv output.csv
 ```
@@ -27,7 +27,7 @@ df = sample("data/ACLEW_corpora.csv", "output/aclew_sampled.csv")
 
 splice the selected audio files
 ```
-$ python splice.py aclew_sampled.csv input_dir output_dir
+$ python splice.py input_dir output_dir
 ```
 
 ```input_dir``` is a folder with all the audio files
@@ -35,12 +35,9 @@ $ python splice.py aclew_sampled.csv input_dir output_dir
 as a function:
 
 ```python
-import sample
 import splice
 
-sampled_df = sample("data/ACLEW_corpora.csv", "output/aclew_sampled.csv")
-
-splice(sampled_df, "data/audio_input", "output/spliced_output")
+splice(input_dir="data/audio_input", output_dir="output/spliced_audio_out")
 ```
 
 #### templgen.py (not done)
