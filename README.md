@@ -1,4 +1,4 @@
-# samplecorpora
+# aclewsample
 
 ### dependencies
  - pandas
