@@ -24,7 +24,7 @@ df = sample("data/ACLEW_corpora.csv", "output/aclew_sampled.csv")
 ```
 
 
-#### splice.py (not done)
+#### splice.py
 
 splice the selected audio files
 ```
@@ -41,7 +41,7 @@ import splice
 splice(input_dir="data/audio_input", output_dir="output/spliced_audio_out")
 ```
 
-#### templgen.py (not done)
+#### templgen.py
 choose a random set of 5min regions in a daylong audio file and generate ELAN templates.
 
 ```
