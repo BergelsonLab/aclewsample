@@ -48,7 +48,7 @@ def _splice(f, out_dir, timestamps):
                 "-acodec", "copy", fname]
         spliced_outputs.append(fname)
         sp.call(command)
-    concat_out = os.path.join(out_dir, "{}_concat_all.wav".format(os.path.basename(f)[:-4]))
+    # concat_out = os.path.join(out_dir, "{}_concat_all.wav".format(os.path.basename(f)[:-4]))
     # concat_cmd = [
     #     "ffmpeg",
     #     "-i", "\"concat:{}\"".format("|".join(spliced_outputs)),
