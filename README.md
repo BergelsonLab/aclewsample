@@ -42,7 +42,7 @@ splice(input_dir="data/audio_input", output_dir="output/spliced_audio_out")
 ```
 
 #### templgen.py
-choose a random set of 5min regions in a daylong audio file and generate ELAN templates.
+choose a random set of 5x2min regions in a daylong audio file and generate ELAN templates.
 
 ```
 $ python templgen.py
