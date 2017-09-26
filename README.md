@@ -1,9 +1,10 @@
 # aclewsample
 
 ### dependencies
- - pandas
- - ffmpeg
- - ffprobe
+ - [**pandas**](http://pandas.pydata.org/) (sample.py)
+ - [**ffmpeg**](https://www.ffmpeg.org/download.html) (splice.py)
+ - [**ffprobe**](https://www.ffmpeg.org/download.html) (templgen.py)
+ - [**pympi**](https://github.com/dopefishh/pympi) (templgen.py)
 
 ### usage
 
@@ -41,6 +42,8 @@ splice(input_dir="data/audio_input", output_dir="output/spliced_audio_out")
 ```
 
 #### templgen.py (not done)
-generate Pratt templates for the spliced files
+choose a random set of 5min regions in a daylong audio file and generate ELAN templates.
 
-TODO...
+```
+$ python templgen.py
+```
