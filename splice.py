@@ -48,16 +48,6 @@ def _splice(f, out_dir, timestamps):
                 "-acodec", "copy", fname]
         spliced_outputs.append(fname)
         sp.call(command)
-    # concat_out = os.path.join(out_dir, "{}_concat_all.wav".format(os.path.basename(f)[:-4]))
-    # concat_cmd = [
-    #     "ffmpeg",
-    #     "-i", "\"concat:{}\"".format("|".join(spliced_outputs)),
-    #     "-c", "copy", concat_out
-    # ]
-
-    concat_cmd = "ffmpeg -i \"concat:{}\" -c copy {}".format("|".join(spliced_outputs), concat_out, shell=True)
-    print concat_cmd
-    sp.call(concat_cmd)
 
 def _overlap(x, y, t):
     if y < x < y+t:
