@@ -5,11 +5,15 @@ corpora_file = "data/ACLEW_list_of_corpora.csv"
 
 def unique_n_children(df, n, exclude_ids=[]):
     selected = pd.DataFrame(columns = df.columns.values)
+    # loop until you've picked out n recordings,
+    # selecting one at a time
     while selected.shape[0] < n:
+        # sample 1 recording using uniform std_mat_ed
+        # categorical distribution
         picked = _uniform_category_sample(df, n=1, cat='std_mat_ed')
         picked_id = picked.iloc[0]['child_level_id']
         # if picked child not already picked from previous session
-        # (when picking the 2x 9mo < age < 14mo), passed in as exclude_ids,
+        # (from when picking the 2x 9mo < age < 14mo, passed in as exclude_ids list),
         # then...
         if picked_id not in exclude_ids:
                 # add to selected
@@ -30,21 +34,16 @@ def _uniform_category_sample(df, n, cat):
     where K is the # of categories and |x| is the frequency of
     elements of category x.
     """
-
     df['weight'] = 0
-    categories = df[cat].unique()
-    K = categories.shape[0]
-
-    # calculate weights
+    K = df[cat].unique().shape[0]
+    # calculate weights for each recording
     for name, group, in df.groupby(cat):
         n_x = group.shape[0] # |x| (number of records with this category)
         p_i = (1/float(K))/n_x
         df.loc[df[cat] == name, 'weight'] = p_i
 
     # pick n samples, given the weights
-    picked = df.sample(n, weights='weight')
-
-    return picked
+    return df.sample(n, weights='weight')
 
 
 def _sample(corpus):
