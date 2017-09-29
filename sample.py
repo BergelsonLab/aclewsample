@@ -17,7 +17,7 @@ def unique_n_children(df, n, exclude_ids=[]):
         # then...
         if picked_id not in exclude_ids:
                 # add to selected
-                selected = selected.append(picked)
+                selected = selected.append(picked)[picked.columns.tolist()]
                 # remove records from selection pool with the same child_level_id,
                 # child has been selected once, out of the pool for future selections
                 df = df.drop(df.index[df['child_level_id'] == picked_id])
@@ -90,7 +90,7 @@ def sample(aclew_corpora_file, output_csv=""):
     # group by corpus and sample
     for name, corpus in corpora.groupby('corpus'):
         the_2, the_8 = _sample(corpus)
-        selected = selected.append([the_2, the_8])
+        selected = selected.append([the_2, the_8])[the_2.columns.tolist()]
     selected = selected.drop('weight', axis=1) # get rid of weight column
     if output_csv:
         selected.to_csv(output_csv, index=False)
