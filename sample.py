@@ -8,7 +8,6 @@ def unique_n_children(df, n, exclude_ids=[]):
     while selected.shape[0] < n:
         picked = _uniform_category_sample(df, n=1, cat='std_mat_ed')
         picked_id = picked.iloc[0]['child_level_id']
-
         # if picked child not already picked from previous session
         # (when picking the 2x 9mo < age < 14mo), passed in as exclude_ids,
         # then...
@@ -30,9 +29,6 @@ def _uniform_category_sample(df, n, cat):
 
     where K is the # of categories and |x| is the frequency of
     elements of category x.
-
-    :param df:
-    :return:
     """
 
     df['weight'] = 0
@@ -79,6 +75,7 @@ def sample(aclew_corpora_file, output_csv=""):
             print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])
+    selected = selected.drop('weight', axis=1)
     if output_csv:
         selected.to_csv(output_csv, index=False)
     return selected
