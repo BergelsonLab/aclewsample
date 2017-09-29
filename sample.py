@@ -10,7 +10,7 @@ def unique_n_children(df, n, exclude_ids=[]):
     while selected.shape[0] < n:
         # sample 1 recording using uniform std_mat_ed
         # categorical distribution
-        picked = _uniform_category_sample(df, n=1, cat='std_mat_ed')
+        picked = _uniform_category_sample(df, n=1, cats=['std_mat_ed', 'child_sex'])
         picked_id = picked.iloc[0]['child_level_id']
         # if picked child not already picked from previous session
         # (from when picking the 2x 9mo < age < 14mo, passed in as exclude_ids list),
@@ -23,24 +23,43 @@ def unique_n_children(df, n, exclude_ids=[]):
                 df = df.drop(df.index[df['child_level_id'] == picked_id])
     return selected
 
-def _uniform_category_sample(df, n, cat):
+
+def _uniform_category_sample(df, n, cats):
     """
-    Normalize P(x_i), where x_i is the i'th member of category x
-    so that the distribution across categories is uniform. Solution is
+    P(X) is the probability mass function over the set of recordings.
+
+    We need to normalize P(x_i), where x_i is the i'th instance belonging to category x,
+    so that the prob distribution across categories is uniform. Solution is
     to set
 
     P(x_i) = (1/K) / |x|
 
     where K is the # of categories and |x| is the frequency of
-    elements of category x.
+    elements in category x.
+
+    If you're only normalizing against a single categorical variable, you do this
+    once and you're done. Given multiple category constraints (e.g. maternal education
+    as well as gender), You calculate separate distributions P(X) for each
+    categorical variable, multiply them together, and normalize against the summed
+    probabilities so everything adds up to 1 again. Those normalized numbers are your
+    final weights.
     """
-    df['weight'] = 0
-    K = df[cat].unique().shape[0]
-    # calculate weights for each recording
-    for name, group, in df.groupby(cat):
-        n_x = group.shape[0] # |x| (number of records with this category)
-        p_i = (1/float(K))/n_x
-        df.loc[df[cat] == name, 'weight'] = p_i
+    df['weight'] = 1
+    for cat in cats:
+        weight_col = 'weight_{}'.format(cat)
+        df[weight_col] = 0
+        K = df[cat].unique().shape[0]
+        for name, group, in df.groupby(cat):
+            n_x = group.shape[0]  # |x| (number of records with this category)
+            p_i = (1 / float(K)) / n_x
+            df.loc[df[cat] == name, 'weight_{}'.format(cat)] = p_i
+        df['weight'] = df['weight'] * df[weight_col]
+        # get rid of single category weight col, it's already
+        # multiplied into the aggregated 'weight' col
+        df = df.drop(weight_col, axis=1)
+
+    # normalize the final weight so all probabilities add up to 1
+    df['weight'] = df['weight'] / df['weight'].sum()
 
     # pick n samples, given the weights
     return df.sample(n, weights='weight')
@@ -70,11 +89,9 @@ def sample(aclew_corpora_file, output_csv=""):
     selected = pd.DataFrame(columns = corpora.columns.values)
     # group by corpus and sample
     for name, corpus in corpora.groupby('corpus'):
-        if name == "Seedlings":
-            print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])
-    selected = selected.drop('weight', axis=1)
+    selected = selected.drop('weight', axis=1) # get rid of weight column
     if output_csv:
         selected.to_csv(output_csv, index=False)
     return selected
