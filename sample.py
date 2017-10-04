@@ -120,6 +120,9 @@ def sample(corpora, output_csv=""):
 
 def optimize(full, output_csv="", n=50):
     """
+    The goal is to minimize the number in best_run[1], where best_run
+    is a tuple of (df, score).
+    
     :param full: the full corpora dataframe
     :param output_csv:
     :param n: number of rounds of optimization passes (default = 25)
@@ -151,7 +154,7 @@ def _objective_func(full, sampled):
     for corpus, df in sampled.groupby('corpus'):
         child_age_kl = _kl_diverge('age_mo_round', full[full['corpus']==corpus], df)
         child_sex_kl = _kl_diverge('child_sex', full[full['corpus'] == corpus], df)
-        mat_ed_kl = _kl_diverge('std_mat_ed', full[full['corpus']==corpus], df)
+        mat_ed_kl    = _kl_diverge('std_mat_ed', full[full['corpus']==corpus], df)
 
         # the sum of the weighted D_kl() for each categorical variable
         kl_sum += w_age*child_age_kl + w_gen*child_sex_kl + w_med*mat_ed_kl
