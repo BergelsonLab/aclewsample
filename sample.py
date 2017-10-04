@@ -10,7 +10,7 @@ best_run = (None, 10000)
 
 # weights on normalizing variables
 w_age = 1.0 # child age
-w_gen = 0.8 # child gender
+w_gen = 0.9 # child gender
 w_med = 0.5 # maternal education
 
 def unique_n_children(df, n, exclude_ids=[], zero=False):
@@ -118,9 +118,8 @@ def sample(corpora, output_csv=""):
         selected.to_csv(output_csv, index=False)
     return selected
 
-def optimize(full, output_csv="", n=25):
+def optimize(full, output_csv="", n=50):
     """
-
     :param full: the full corpora dataframe
     :param output_csv:
     :param n: number of rounds of optimization passes (default = 25)
@@ -189,6 +188,6 @@ if __name__ == "__main__":
     aclew_full = pd.read_csv(sys.argv[1])
     output_csv = sys.argv[2]
     if "--optimize" in sys.argv:
-        optimize(aclew_full, output_csv=output_csv)
+        optimize(aclew_full, output_csv=output_csv, n=150)
     else:
         sample(aclew_full, output_csv)
