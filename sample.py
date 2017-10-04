@@ -122,7 +122,7 @@ def optimize(full, output_csv="", n=50):
     """
     The goal is to minimize the number in best_run[1], where best_run
     is a tuple of (df, score).
-    
+
     :param full: the full corpora dataframe
     :param output_csv:
     :param n: number of rounds of optimization passes (default = 25)
@@ -130,9 +130,13 @@ def optimize(full, output_csv="", n=50):
     """
     global best_run
     for i in range(n):
+        # perform a sample
         result = sample(full)
+        # score it against the objective function
         obj_result = _objective_func(full, result)
+        # if the score is lower than the best_run so far...
         if obj_result < best_run[1]:
+            # set best run to this latest sample
             best_run = (result, obj_result)
         print "optim #{}: {:.4f},   best so far: {:.4f}".format(i+1, obj_result, best_run[1])
     if output_csv:
