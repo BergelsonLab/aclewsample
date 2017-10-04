@@ -10,6 +10,7 @@ best_run = (None, 10000)
 
 # weights on normalizing variables
 w_age = 1.0 # child age
+w_gen = 0.8 # child gender
 w_med = 0.5 # maternal education
 
 def unique_n_children(df, n, exclude_ids=[], zero=False):
@@ -150,10 +151,11 @@ def _objective_func(full, sampled):
     kl_sum = 0
     for corpus, df in sampled.groupby('corpus'):
         child_age_kl = _kl_diverge('age_mo_round', full[full['corpus']==corpus], df)
+        child_sex_kl = _kl_diverge('child_sex', full[full['corpus'] == corpus], df)
         mat_ed_kl = _kl_diverge('std_mat_ed', full[full['corpus']==corpus], df)
 
         # the sum of the weighted D_kl() for each categorical variable
-        kl_sum += w_age*child_age_kl + w_med*mat_ed_kl
+        kl_sum += w_age*child_age_kl + w_gen*child_sex_kl + w_med*mat_ed_kl
     return kl_sum
 
 
