@@ -125,7 +125,7 @@ def optimize(full, output_csv="", n=50):
 
     :param full: the full corpora dataframe
     :param output_csv:
-    :param n: number of rounds of optimization passes (default = 25)
+    :param n: number of rounds of optimization passes (default = 50)
     :return: the optimal (so far, given n) sampled dataframe
     """
     global best_run
