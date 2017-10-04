@@ -133,12 +133,12 @@ def optimize(full, output_csv="", n=50):
         # perform a sample
         result = sample(full)
         # score it against the objective function
-        obj_result = _objective_func(full, result)
+        score = _objective_func(full, result)
         # if the score is lower than the best_run so far...
-        if obj_result < best_run[1]:
+        if score < best_run[1]:
             # set best run to this latest sample
-            best_run = (result, obj_result)
-        print "optim #{}: {:.4f},   best so far: {:.4f}".format(i+1, obj_result, best_run[1])
+            best_run = (result, score)
+        print "optim #{}: {:.4f},   best so far: {:.4f}".format(i+1, score, best_run[1])
     if output_csv:
         best_run[0].to_csv(output_csv)
     return best_run[0]
