@@ -186,7 +186,7 @@ def _kl_diverge(categ, full, df):
     u_cat = [1 / float(len(cats))
              for x in cats]
 
-    # can't log(o), add constant (in this case 1) to avoid that
+    # can't take log(0), add constant (in this case 1) to avoid that
     kl = sum((p+1) * math.log((p+1) / (u+1), 2) for p, u in zip(p_cat, u_cat))
     return kl
 
