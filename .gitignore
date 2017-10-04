@@ -7,3 +7,5 @@
 *.eaf
 *.pfsx
 *.bak
+.vscode
+*.pdf

@@ -1,17 +1,31 @@
 import sys
 import pandas as pd
+import math
 
 corpora_file = "data/ACLEW_list_of_corpora.csv"
 
-def unique_n_children(df, n, exclude_ids=[]):
+# tuple of (df, score) where score is the score returned by
+#  _objective_func() (i.e. the number we're minimizing)
+best_run = (None, 10000)
+
+# weights on normalizing variables
+w_age = 1.0 # child age
+w_med = 0.5 # maternal education
+
+def unique_n_children(df, n, exclude_ids=[], zero=False):
     selected = pd.DataFrame(columns = df.columns.values)
     # loop until you've picked out n recordings,
     # selecting one at a time
     while selected.shape[0] < n:
         # sample 1 recording using uniform std_mat_ed
         # categorical distribution
-        picked = _uniform_category_sample(df, n=1, cats=['std_mat_ed', 'child_sex'])
-        picked_id = picked.iloc[0]['child_level_id']
+        if zero and not selected.empty:
+            prev_gender = selected.iloc[0].child_sex
+            picked = _uniform_category_sample(df, n=1, cats=['std_mat_ed', 'child_sex'], zero_gender=prev_gender)
+            picked_id = picked.iloc[0]['child_level_id']
+        else:
+            picked = _uniform_category_sample(df, n=1, cats=['std_mat_ed', 'child_sex'])
+            picked_id = picked.iloc[0]['child_level_id']
         # if picked child not already picked from previous session
         # (from when picking the 2x 9mo < age < 14mo, passed in as exclude_ids list),
         # then...
@@ -24,7 +38,7 @@ def unique_n_children(df, n, exclude_ids=[]):
     return selected
 
 
-def _uniform_category_sample(df, n, cats):
+def _uniform_category_sample(df, n, cats, zero_gender=""):
     """
     P(X) is the probability mass function over the set of recordings.
 
@@ -58,8 +72,14 @@ def _uniform_category_sample(df, n, cats):
         # multiplied into the aggregated 'weight' col
         df = df.drop(weight_col, axis=1)
 
+    # if zero_gender is passed in, set that gender's weight really low (can't use 0
+    # because of cases where the other gender is not left in the remaining pool)
+    if zero_gender:
+        df.loc[df['child_sex'] == zero_gender, 'weight'] = 0.0000001
+
     # normalize the final weight so all probabilities add up to 1
     df['weight'] = df['weight'] / df['weight'].sum()
+
 
     # pick n samples, given the weights
     return df.sample(n, weights='weight')
@@ -74,21 +94,22 @@ def _sample(corpus):
     # just the entries between 09 and 14 months
     within_09_14 = corpus.query('(age_mo_round >= 9) & (age_mo_round <= 14)')
     # sample a random unique 2 from within_09_14
-    the_2 = unique_n_children(within_09_14, 2)
+    the_2 = unique_n_children(within_09_14, n=2, zero=True)
     # remove those already sampled 2 from the original corpus
     without_the2 = corpus.drop(the_2.index)
     # filter without_the2 for only 0-36mo olds
     the_rest_in_agerange = without_the2.query('(age_mo_round >= 0) & (age_mo_round <= 36)')
     # get a unique 8 recordings (keeping in mind the previous 2 already
     # selected, passed as "exclude_ids") from the_rest_in_agerange
-    the_8 = unique_n_children(the_rest_in_agerange, 8, exclude_ids=the_2['child_level_id'].values.tolist())
+    the_8 = unique_n_children(the_rest_in_agerange, n=8, exclude_ids=the_2['child_level_id'].values.tolist())
     return the_2, the_8
 
-def sample(aclew_corpora_file, output_csv=""):
-    corpora = pd.read_csv(aclew_corpora_file)
+def sample(corpora, output_csv=""):
     selected = pd.DataFrame(columns = corpora.columns.values)
     # group by corpus and sample
     for name, corpus in corpora.groupby('corpus'):
+        # if name == "Seedlings":
+        #     print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])[the_2.columns.tolist()]
     selected = selected.drop('weight', axis=1) # get rid of weight column
@@ -96,8 +117,76 @@ def sample(aclew_corpora_file, output_csv=""):
         selected.to_csv(output_csv, index=False)
     return selected
 
+def optimize(full, output_csv="", n=25):
+    """
+
+    :param full: the full corpora dataframe
+    :param output_csv:
+    :param n: number of rounds of optimization passes (default = 25)
+    :return: the optimal (so far, given n) sampled dataframe
+    """
+    global best_run
+    for i in range(n):
+        result = sample(full)
+        obj_result = _objective_func(full, result)
+        if obj_result < best_run[1]:
+            best_run = (result, obj_result)
+        print "optim #{}: {:.4f},   best so far: {:.4f}".format(i+1, obj_result, best_run[1])
+    if output_csv:
+        best_run[0].to_csv(output_csv)
+    return best_run[0]
+
+
+def _objective_func(full, sampled):
+    """
+    :param full: the full corpora list
+    :param sampled: the sampled set
+    :return: the score for how far away the given sample is
+            from the ideally uniform sample. Here it's the weighted
+            sum of the KL-Divergences of each lab's sample relative
+            to the hypothetical uniform distribution, for each
+            categorical variable
+    """
+    kl_sum = 0
+    for corpus, df in sampled.groupby('corpus'):
+        child_age_kl = _kl_diverge('age_mo_round', full[full['corpus']==corpus], df)
+        mat_ed_kl = _kl_diverge('std_mat_ed', full[full['corpus']==corpus], df)
+
+        # the sum of the weighted D_kl() for each categorical variable
+        kl_sum += w_age*child_age_kl + w_med*mat_ed_kl
+    return kl_sum
+
+
+def _kl_diverge(categ, full, df):
+    """
+    The KL-divergence between the sampled distribution
+    and the hypothetical uniform distribution given an alphabet
+    of N categories and channel size of whatever the per corpus
+    sample size is.
+
+    :param categ: the categorical variable
+    :param full: full pre-sampled dataset
+    :param df: sampled subset
+    :return: D_kl(P||U), where P is the probability of a category,
+            and U is the hypothetical uniform distribution over categories
+    """
+    cats = full[categ].unique()
+    # prob distribution of category in sample
+    p_cat = [df[df[categ] == x].shape[0] / float(df.shape[0])
+             for x in cats]
+    # the uniform distribution
+    u_cat = [1 / float(len(cats))
+             for x in cats]
+
+    # can't log(o), add constant (in this case 1) to avoid that
+    kl = sum((p+1) * math.log((p+1) / (u+1), 2) for p, u in zip(p_cat, u_cat))
+    return kl
+
 
 if __name__ == "__main__":
-    aclew_csv = sys.argv[1]
+    aclew_full = pd.read_csv(sys.argv[1])
     output_csv = sys.argv[2]
-    sample(aclew_csv, output_csv)
+    if "--optimize" in sys.argv:
+        optimize(aclew_full, output_csv=output_csv)
+    else:
+        sample(aclew_full, output_csv)
