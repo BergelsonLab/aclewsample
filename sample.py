@@ -109,8 +109,8 @@ def sample(corpora, output_csv=""):
     selected = pd.DataFrame(columns = corpora.columns.values)
     # group by corpus and sample
     for name, corpus in corpora.groupby('corpus'):
-        # if name == "Seedlings":
-        #     print
+        if name == "Seedlings":
+            print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])[the_2.columns.tolist()]
 
@@ -198,6 +198,7 @@ def _kl_diverge(categ, full, df):
 
 if __name__ == "__main__":
     aclew_full = pd.read_csv(sys.argv[1])
+    aclew_full['child_level_id'] = aclew_full['child_level_id'].str.strip()
     output_csv = sys.argv[2]
     if "--optimize" in sys.argv:
         optimize(aclew_full, output_csv=output_csv, n=250)

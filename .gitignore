@@ -10,3 +10,4 @@
 .vscode
 *.pdf
 notebooks
+data/templates
