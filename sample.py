@@ -113,7 +113,10 @@ def sample(corpora, output_csv=""):
         #     print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])[the_2.columns.tolist()]
-    selected = selected.drop('weight', axis=1) # get rid of weight column
+
+    sselected = selected.drop('weight', axis=1) # get rid of weight column
+    selected['aclew_id'] = selected['aclew_id'].astype(int)
+
     if output_csv:
         selected.to_csv(output_csv, index=False)
     return selected
@@ -139,6 +142,8 @@ def optimize(full, output_csv="", n=50):
             # set best run to this latest sample
             best_run = (result, score)
         print "optim #{}: {:.4f},   best so far: {:.4f}".format(i+1, score, best_run[1])
+
+    best_run[0]['aclew_id'] = best_run[0]['aclew_id'].astype(int)
     if output_csv:
         best_run[0].to_csv(output_csv)
     return best_run[0]
@@ -181,10 +186,10 @@ def _kl_diverge(categ, full, df):
     cats = full[categ].unique()
     # prob distribution of category in sample
     p_cat = [df[df[categ] == x].shape[0] / float(df.shape[0])
-             for x in cats]
+                for x in cats]
     # the uniform distribution
     u_cat = [1 / float(len(cats))
-             for x in cats]
+                for x in cats]
 
     # can't take log(0), add constant (in this case 1) to avoid that
     kl = sum((p+1) * math.log((p+1) / (u+1), 2) for p, u in zip(p_cat, u_cat))
@@ -195,6 +200,6 @@ if __name__ == "__main__":
     aclew_full = pd.read_csv(sys.argv[1])
     output_csv = sys.argv[2]
     if "--optimize" in sys.argv:
-        optimize(aclew_full, output_csv=output_csv, n=150)
+        optimize(aclew_full, output_csv=output_csv, n=250)
     else:
         sample(aclew_full, output_csv)
