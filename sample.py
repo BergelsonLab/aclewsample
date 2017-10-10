@@ -109,8 +109,8 @@ def sample(corpora, output_csv=""):
     selected = pd.DataFrame(columns = corpora.columns.values)
     # group by corpus and sample
     for name, corpus in corpora.groupby('corpus'):
-        if name == "Seedlings":
-            print
+        # if name == "Seedlings":
+        #     print
         the_2, the_8 = _sample(corpus)
         selected = selected.append([the_2, the_8])[the_2.columns.tolist()]
 
@@ -119,6 +119,7 @@ def sample(corpora, output_csv=""):
 
     if output_csv:
         selected.to_csv(output_csv, index=False)
+        selected.ix[:, ['aclew_id', 'corpus']].to_csv("output/aclew_sample_short.csv", index=False)
     return selected
 
 def optimize(full, output_csv="", n=50):
@@ -146,6 +147,7 @@ def optimize(full, output_csv="", n=50):
     best_run[0]['aclew_id'] = best_run[0]['aclew_id'].astype(int)
     if output_csv:
         best_run[0].to_csv(output_csv)
+        best_run[0].ix[:, ['aclew_id', 'corpus']].to_csv("output/aclew_sample_short.csv", index=False)
     return best_run[0]
 
 
