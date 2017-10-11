@@ -4,7 +4,7 @@ import os
 from random import shuffle
 from util import FFProbe
 
-def choose_onsets(f, n=5, t=2, start=30):
+def choose_onsets_from_audio(f, n=5, t=2, start=30):
     """
     Args:
         f (str): audio file
@@ -30,6 +30,17 @@ def choose_onsets(f, n=5, t=2, start=30):
         return [(x, x+2) for x in selected]
     except (IndexError):
         print  "{} was a problem file. skipped.".format(f)
+
+def choose_onsets(l, n=5, t=2, start=30):
+    minute_range = range(start, l - t)
+    shuffle(minute_range)
+    selected = []
+    for x in minute_range:
+        if len(selected) >= n:
+            break
+        if not any(_overlap(x, y, t) for y in selected):
+            selected.append(x)
+    return [(x, x + 2) for x in selected]
 
 def _splice(f, out_dir, timestamps):
     """
